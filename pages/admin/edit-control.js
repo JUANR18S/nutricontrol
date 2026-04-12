@@ -1,0 +1,233 @@
+/* ============================================================
+   NutriControl — Editar Control Nutricional (Admin)
+   ============================================================
+   Pre-carga un control existente para su edición.
+   El paciente NO se puede cambiar (ya está asociado al control).
+   ============================================================ */
+window.NutriPages = window.NutriPages || {};
+
+window.NutriPages['admin-edit-control'] = {
+
+  render(container, params) {
+    const session = Auth.getSession();
+    const control = Store.getControlById(params.id);
+
+    /* Control no encontrado */
+    if (!control) {
+      container.innerHTML = Layout.wrap(session, 'admin/patients', `
+        <div class="placeholder-page">
+          <div class="placeholder-icon">🔍</div>
+          <h2>Control no encontrado</h2>
+          <p>El control solicitado no existe o fue eliminado.</p>
+          <a href="#/admin/patients" class="btn btn-primary" style="margin-top:8px">Volver al listado</a>
+        </div>`);
+      Layout.init();
+      return;
+    }
+
+    const patient = Store.getPatientById(control.patientId);
+    const patientName = patient
+      ? `${Utils.escapeHtml(patient.firstName)} ${Utils.escapeHtml(patient.lastName)}`
+      : 'Paciente desconocido';
+    const backHref = patient ? `#/admin/patients/${patient.id}` : '#/admin/patients';
+
+    const content = `
+      <div class="page-header">
+        <div>
+          <h1>Editar Control Nutricional</h1>
+          <p style="color:var(--text-secondary);margin-top:4px">Modifica el control del <strong>${Utils.formatDate(control.date)}</strong> de <strong>${patientName}</strong>.</p>
+        </div>
+        <a href="${backHref}" class="btn btn-secondary btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+          Volver al perfil
+        </a>
+      </div>
+
+      <form id="edit-control-form" novalidate>
+
+        <!-- Paciente (solo lectura) y Fecha -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card__header">
+            <h3 class="card__title">Paciente y Fecha</h3>
+          </div>
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label>Paciente</label>
+              <input type="text" value="${patientName}" readonly
+                style="background:var(--bg-surface);cursor:not-allowed;color:var(--text-secondary)">
+            </div>
+            <div class="form-group">
+              <label for="ec-date">Fecha del Control <span style="color:var(--danger)">*</span></label>
+              <input type="date" id="ec-date" value="${control.date}" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Medidas antropométricas -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card__header">
+            <h3 class="card__title">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z"/></svg>
+              Medidas Antropométricas
+            </h3>
+          </div>
+          <div class="form-grid form-grid-3">
+            <div class="form-group">
+              <label for="ec-weight">Peso (kg) <span style="color:var(--danger)">*</span></label>
+              <input type="number" id="ec-weight" placeholder="Ej: 72.5" min="20" max="300" step="0.1" value="${control.weight}" required>
+            </div>
+            <div class="form-group">
+              <label for="ec-height">Talla (cm) <span style="color:var(--danger)">*</span></label>
+              <input type="number" id="ec-height" placeholder="Ej: 170" min="100" max="250" step="0.5" value="${control.height}" required>
+            </div>
+            <div class="form-group">
+              <label for="ec-bmi">IMC (calculado automáticamente)</label>
+              <input type="text" id="ec-bmi" placeholder="—" value="${control.bmi}" readonly
+                style="background:var(--bg-surface);cursor:not-allowed;color:var(--text-secondary)">
+              <div id="ec-bmi-badge" style="margin-top:6px">
+                <span class="badge badge-${Utils.getBMICategory(control.bmi).cls}">${Utils.getBMICategory(control.bmi).label}</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="ec-fat">% Grasa Corporal</label>
+              <input type="number" id="ec-fat" placeholder="Ej: 28.5" min="1" max="70" step="0.1" value="${control.fatPercentage ?? ''}">
+            </div>
+            <div class="form-group">
+              <label for="ec-muscle">Masa Muscular (kg)</label>
+              <input type="number" id="ec-muscle" placeholder="Ej: 45.2" min="5" max="100" step="0.1" value="${control.muscleMass ?? ''}">
+            </div>
+            <div class="form-group">
+              <label for="ec-waist">Circumferencia Cintura (cm)</label>
+              <input type="number" id="ec-waist" placeholder="Ej: 88" min="40" max="200" step="0.5" value="${control.waistCircumference ?? ''}">
+            </div>
+          </div>
+        </div>
+
+        <!-- Notas y plan -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card__header">
+            <h3 class="card__title">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+              Notas y Plan Dietético
+            </h3>
+          </div>
+          <div class="form-grid" style="gap:20px">
+            <div class="form-group">
+              <label for="ec-notes">Notas Clínicas</label>
+              <textarea id="ec-notes" rows="4" placeholder="Observaciones del control, estado del paciente, evolución…">${Utils.escapeHtml(control.notes || '')}</textarea>
+            </div>
+            <div class="form-group">
+              <label for="ec-diet">Plan Dietético</label>
+              <textarea id="ec-diet" rows="4" placeholder="Indicaciones nutricionales, distribución de macros, kcal diarias…">${Utils.escapeHtml(control.dietPlan || '')}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error y submit -->
+        <div id="ec-error" class="alert alert-danger hidden" role="alert">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+          <span id="ec-error-text"></span>
+        </div>
+
+        <div class="flex gap-2" style="justify-content:flex-end;margin-top:8px">
+          <a href="${backHref}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" id="ec-submit" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span id="ec-submit-text">Guardar Cambios</span>
+            <span id="ec-submit-spinner" class="spinner spinner-sm hidden"></span>
+          </button>
+        </div>
+      </form>
+    `;
+
+    container.innerHTML = Layout.wrap(session, 'admin-edit-control', content);
+    Layout.init();
+  },
+
+  init(params) {
+    const weightInput   = document.getElementById('ec-weight');
+    const heightInput   = document.getElementById('ec-height');
+    const bmiInput      = document.getElementById('ec-bmi');
+    const bmiBadge      = document.getElementById('ec-bmi-badge');
+    const form          = document.getElementById('edit-control-form');
+    const errorEl       = document.getElementById('ec-error');
+    const errorText     = document.getElementById('ec-error-text');
+    const submitBtn     = document.getElementById('ec-submit');
+    const submitText    = document.getElementById('ec-submit-text');
+    const submitSpinner = document.getElementById('ec-submit-spinner');
+
+    if (!form) return;
+
+    /* Auto-calcular IMC */
+    const calcBMI = () => {
+      const w = parseFloat(weightInput?.value);
+      const h = parseFloat(heightInput?.value);
+      if (w > 0 && h > 0) {
+        const bmi = Utils.calculateBMI(w, h);
+        const cat = Utils.getBMICategory(bmi);
+        bmiInput.value = bmi;
+        bmiBadge.innerHTML = `<span class="badge badge-${cat.cls}">${cat.label}</span>`;
+      } else {
+        bmiInput.value = '';
+        bmiBadge.innerHTML = '';
+      }
+    };
+
+    weightInput?.addEventListener('input', calcBMI);
+    heightInput?.addEventListener('input', calcBMI);
+
+    /* Submit */
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      errorEl.classList.add('hidden');
+
+      const control = Store.getControlById(params.id);
+      if (!control) {
+        return this._showError(errorText, errorEl, 'El control ya no existe.');
+      }
+
+      const date   = document.getElementById('ec-date')?.value;
+      const weight = parseFloat(document.getElementById('ec-weight')?.value);
+      const height = parseFloat(document.getElementById('ec-height')?.value);
+      const fat    = parseFloat(document.getElementById('ec-fat')?.value) || null;
+      const muscle = parseFloat(document.getElementById('ec-muscle')?.value) || null;
+      const waist  = parseFloat(document.getElementById('ec-waist')?.value) || null;
+      const notes  = document.getElementById('ec-notes')?.value.trim() || '';
+      const diet   = document.getElementById('ec-diet')?.value.trim() || '';
+
+      /* Validaciones */
+      if (!date)                  return this._showError(errorText, errorEl, 'Ingresa la fecha del control.');
+      if (!weight || weight <= 0) return this._showError(errorText, errorEl, 'Ingresa un peso válido.');
+      if (!height || height <= 0) return this._showError(errorText, errorEl, 'Ingresa una talla válida.');
+
+      /* Loading */
+      submitBtn.disabled = true;
+      submitText.textContent = 'Guardando…';
+      submitSpinner.classList.remove('hidden');
+      await new Promise(r => setTimeout(r, 500));
+
+      const bmi = Utils.calculateBMI(weight, height);
+
+      Store.updateControl(control.id, {
+        date,
+        weight,
+        height,
+        bmi,
+        fatPercentage:      fat,
+        muscleMass:         muscle,
+        waistCircumference: waist,
+        notes,
+        dietPlan:           diet,
+      });
+
+      Toast.success('Control actualizado', `Control del ${Utils.formatDate(date)} actualizado exitosamente.`);
+      App.navigate(`#/admin/patients/${control.patientId}`);
+    });
+  },
+
+  _showError(textEl, el, msg) {
+    textEl.textContent = msg;
+    el.classList.remove('hidden');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  },
+};
