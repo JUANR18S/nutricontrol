@@ -1,14 +1,14 @@
 /* ============================================================
-   NutriControl — Router principal (SPA hash-based)
-   Versión async para Supabase
+   NutriControl - Router principal (SPA hash-based)
    ============================================================ */
 
 const App = {
 
-  /* Rutas estáticas */
   _routes: {
-    '/login':               { page: 'login',              auth: false,    title: 'Iniciar Sesión' },
+    '/login':               { page: 'login',              auth: false,    title: 'Iniciar Sesion' },
     '/register':            { page: 'register',           auth: false,    title: 'Crear Cuenta' },
+    '/admin-access':        { page: 'admin-access',       auth: false,    title: 'Acceso Administrativo' },
+    '/email-confirmation':  { page: 'email-confirmation', auth: false,    title: 'Confirmar Correo' },
     '/admin/dashboard':     { page: 'admin-dashboard',    role: 'admin',  title: 'Dashboard' },
     '/admin/patients':      { page: 'admin-patients',     role: 'admin',  title: 'Pacientes' },
     '/admin/patients/new':  { page: 'admin-new-patient',  role: 'admin',  title: 'Nuevo Paciente' },
@@ -21,41 +21,37 @@ const App = {
     '/patient/history':     { page: 'patient-history',    role: 'patient',title: 'Mis Controles' },
   },
 
-  /* Rutas dinámicas (con parámetros) */
   _dynamicRoutes: [
-    { pattern: /^\/admin\/patients\/([^/]+)\/edit$/, page: 'admin-edit-patient',   role: 'admin', param: 'id', title: 'Editar Paciente' },
-    { pattern: /^\/admin\/patients\/([^/]+)$/,      page: 'admin-patient-detail', role: 'admin', param: 'id', title: 'Perfil del Paciente' },
-    { pattern: /^\/admin\/controls\/([^/]+)\/edit$/, page: 'admin-edit-control',  role: 'admin', param: 'id', title: 'Editar Control' },
-    { pattern: /^\/admin\/admins\/([^/]+)\/edit$/,  page: 'admin-edit-admin',     role: 'admin', param: 'id', title: 'Editar Administrador' },
-    { pattern: /^\/admin\/admins\/([^/]+)$/,        page: 'admin-admin-detail',   role: 'admin', param: 'id', title: 'Administrador' },
+    { pattern: /^\/admin\/patients\/([^/]+)\/edit$/, page: 'admin-edit-patient', role: 'admin', param: 'id', title: 'Editar Paciente' },
+    { pattern: /^\/admin\/patients\/([^/]+)$/, page: 'admin-patient-detail', role: 'admin', param: 'id', title: 'Perfil del Paciente' },
+    { pattern: /^\/admin\/controls\/([^/]+)\/edit$/, page: 'admin-edit-control', role: 'admin', param: 'id', title: 'Editar Control' },
+    { pattern: /^\/admin\/admins\/([^/]+)\/edit$/, page: 'admin-edit-admin', role: 'admin', param: 'id', title: 'Editar Administrador' },
+    { pattern: /^\/admin\/admins\/([^/]+)$/, page: 'admin-admin-detail', role: 'admin', param: 'id', title: 'Administrador' },
   ],
 
-  /* Ruta actual para detectar misma ruta */
   _currentPath: null,
 
-  /* ─────────────────────────────────────────────────────── */
   async init() {
-    Auth.initListener(); // Escuchar magic links y sesión
+    Auth.initListener();
     await Store.init();
     window.addEventListener('hashchange', () => this._handleRoute());
     await this._handleRoute();
   },
 
-  /* ─────────────────────────────────────────────────────── */
   async _handleRoute() {
     const hash = window.location.hash || '#/login';
-    
-    // Ignorar hashes que sean tokens de Supabase Auth
+
     if (hash.includes('access_token=') || hash.includes('type=recovery')) {
       return;
     }
 
-    const path = hash.slice(1);
+    const rawPath = hash.slice(1);
+    const [pathOnly, queryString = ''] = rawPath.split('?');
+    const path = pathOnly || '/login';
 
     let config = this._routes[path];
-    let params = {};
+    let params = { query: this._parseQuery(queryString) };
 
-    /* Intentar rutas dinámicas */
     if (!config) {
       for (const dr of this._dynamicRoutes) {
         const match = path.match(dr.pattern);
@@ -67,15 +63,16 @@ const App = {
       }
     }
 
-    /* Si no existe la ruta → redirigir */
     if (!config) {
       const session = Auth.getSession();
-      if (!session) { window.location.hash = '#/login'; return; }
+      if (!session) {
+        window.location.hash = '#/login';
+        return;
+      }
       window.location.hash = session.role === 'admin' ? '#/admin/dashboard' : '#/patient/dashboard';
       return;
     }
 
-    /* Guard: ruta pública (login) con sesión activa */
     if (config.auth === false) {
       const session = Auth.getSession();
       if (session) {
@@ -84,25 +81,22 @@ const App = {
       }
     }
 
-    /* Guard: ruta protegida */
-    if (config.role) {
-      if (!Auth.requireAuth(config.role)) return;
+    if (config.role && !Auth.requireAuth(config.role)) {
+      return;
     }
 
-    /* Actualizar título de pestaña */
     if (config.title) {
-      document.title = `${config.title} — NutriControl`;
+      document.title = `${config.title} - NutriControl`;
     }
 
     this._currentPath = path;
     await this._renderPage(config.page, params);
   },
 
-  /* ─────────────────────────────────────────────────────── */
   async _renderPage(pageName, params = {}) {
-    const appEl   = document.getElementById('app');
+    const appEl = document.getElementById('app');
     const session = Auth.getSession();
-    const pages   = window.NutriPages ?? {};
+    const pages = window.NutriPages ?? {};
 
     if (pages[pageName]) {
       appEl.innerHTML = '';
@@ -115,7 +109,6 @@ const App = {
     }
   },
 
-  /* ─────────────────────────────────────────────────────── */
   _renderPlaceholder(appEl, session) {
     const dashHash = session?.role === 'admin' ? '#/admin/dashboard' : '#/patient/dashboard';
 
@@ -127,8 +120,8 @@ const App = {
           <main class="page-content">
             <div class="placeholder-page animate-up">
               <div class="placeholder-icon">🚧</div>
-              <h2>Próximamente</h2>
-              <p>Esta sección está en construcción. Vuelve pronto.</p>
+              <h2>Proximamente</h2>
+              <p>Esta seccion esta en construccion. Vuelve pronto.</p>
               <a href="${dashHash}" class="btn btn-primary" style="margin-top:8px">Ir al inicio</a>
             </div>
           </main>
@@ -140,20 +133,23 @@ const App = {
     Navbar.init();
   },
 
-  /**
-   * Navega a un hash. Si es la misma ruta actual,
-   * fuerza el re-render directamente (hashchange no dispara en mismo hash).
-   */
   navigate(hash) {
-    const newPath = hash.startsWith('#') ? hash.slice(1) : hash;
+    const newPath = (hash.startsWith('#') ? hash.slice(1) : hash).split('?')[0];
     if (this._currentPath === newPath) {
-      /* Misma ruta: forzar re-render sin doble salto */
       this._handleRoute();
     } else {
       window.location.hash = hash;
     }
   },
+
+  _parseQuery(queryString = '') {
+    const params = {};
+    const searchParams = new URLSearchParams(queryString);
+    searchParams.forEach((value, key) => {
+      params[key] = value;
+    });
+    return params;
+  },
 };
 
-/* ── Arrancar la aplicación ──────────────────────────────── */
 App.init();

@@ -553,6 +553,16 @@ h5 { font-size: 0.938rem; font-weight: 500; line-height: 1.4; }
   border-color: var(--border-hover);
 }
 
+.btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+.btn-outline:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+}
+
 .btn-danger {
   background: var(--danger-muted);
   color: var(--danger);
@@ -1094,6 +1104,96 @@ td {
   color: var(--text-secondary);
   font-family: 'Courier New', monospace;
   line-height: 1.8;
+}
+
+.login-hint--stacked {
+  text-align: center;
+}
+
+.login-hint--stacked p {
+  margin-bottom: 12px;
+}
+
+.login-content--centered {
+  grid-template-columns: minmax(0, 520px);
+  justify-content: center;
+}
+
+.login-content--admin {
+  grid-template-columns: 1fr minmax(0, 560px);
+}
+
+.confirmation-card {
+  max-width: 520px;
+}
+
+.confirmation-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.28);
+}
+
+.confirmation-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.confirmation-email {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.confirmation-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-access-card {
+  max-width: 560px;
+}
+
+.admin-auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.admin-auth-tab {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+
+.admin-auth-tab.is-active {
+  background: var(--bg-card-hover);
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.admin-auth-panel {
+  display: none;
+}
+
+.admin-auth-panel.is-active {
+  display: block;
 }
 
 /* ── Placeholder Page ──────────────────────────────────────── */

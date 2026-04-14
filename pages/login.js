@@ -1,15 +1,16 @@
 /* ============================================================
-   NutriControl — Página de Login
+   NutriControl - Pagina de Login
    ============================================================ */
 window.NutriPages = window.NutriPages || {};
 
 window.NutriPages['login'] = {
 
-  render(container) {
+  render(container, params = {}) {
+    const confirmed = params.query?.confirmed === '1';
+    const registeredEmail = params.query?.email ? decodeURIComponent(params.query.email) : '';
+
     container.innerHTML = `
       <div class="login-page">
-
-        <!-- Fondo animado -->
         <div class="login-bg">
           <div class="blob blob-1"></div>
           <div class="blob blob-2"></div>
@@ -17,8 +18,6 @@ window.NutriPages['login'] = {
         </div>
 
         <div class="login-content">
-
-          <!-- Branding lateral -->
           <div class="login-brand">
             <div class="brand-logo-wrap">
               <div class="brand-logo">
@@ -34,7 +33,7 @@ window.NutriPages['login'] = {
                 <div class="brand-feature-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
                 </div>
-                <span>Gestión completa de pacientes y perfiles</span>
+                <span>Gestion completa de pacientes y perfiles</span>
               </div>
               <div class="brand-feature">
                 <div class="brand-feature-icon">
@@ -51,7 +50,6 @@ window.NutriPages['login'] = {
             </div>
           </div>
 
-          <!-- Formulario -->
           <div class="glass-card login-card">
             <div class="login-card__header">
               <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px">
@@ -59,15 +57,20 @@ window.NutriPages['login'] = {
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
                 </div>
               </div>
-              <h2>Iniciar Sesión</h2>
+              <h2>Iniciar Sesion</h2>
               <p>Ingresa tus credenciales para continuar</p>
             </div>
 
             <form id="login-form" class="login-form" novalidate>
+              ${confirmed ? `
+                <div id="login-success" class="alert alert-success" role="status">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                  <span>Correo confirmado. Ya puedes iniciar sesion.</span>
+                </div>
+              ` : ''}
 
-              <!-- Email -->
               <div class="form-group">
-                <label for="login-email">Correo electrónico</label>
+                <label for="login-email">Correo electronico</label>
                 <div class="input-wrapper">
                   <span class="input-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
@@ -78,14 +81,14 @@ window.NutriPages['login'] = {
                     name="email"
                     placeholder="tucorreo@ejemplo.com"
                     autocomplete="email"
+                    value="${Utils.escapeHtml(registeredEmail)}"
                     required
                   >
                 </div>
               </div>
 
-              <!-- Contraseña -->
               <div class="form-group">
-                <label for="login-password">Contraseña</label>
+                <label for="login-password">Contrasena</label>
                 <div class="input-wrapper">
                   <span class="input-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
@@ -94,71 +97,69 @@ window.NutriPages['login'] = {
                     type="password"
                     id="login-password"
                     name="password"
-                    placeholder="••••••••"
+                    placeholder="........"
                     autocomplete="current-password"
                     required
                   >
-                  <button type="button" id="toggle-password" class="input-action" aria-label="Mostrar contraseña">
+                  <button type="button" id="toggle-password" class="input-action" aria-label="Mostrar contrasena">
                     <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                   </button>
                 </div>
               </div>
 
-              <!-- Error -->
               <div id="login-error" class="alert alert-danger hidden" role="alert">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
                 <span id="login-error-text"></span>
               </div>
 
-              <!-- Submit -->
               <button type="submit" id="login-btn" class="btn btn-primary btn-lg btn-full">
                 <span id="login-btn-text">Ingresar</span>
                 <span id="login-btn-spinner" class="spinner hidden"></span>
               </button>
-
             </form>
 
-            <!-- Registro -->
-            <div class="login-hint" style="margin-top: 20px; text-align: center;">
-              <p style="color: var(--text-secondary);">¿No tienes una cuenta? <a href="#/register" style="color:var(--accent);text-decoration:none;font-weight:600">Regístrate aquí</a></p>
+            <div class="login-hint login-hint--stacked">
+              <p>No estas registrado?</p>
+              <a href="#/register" class="btn btn-outline btn-full">Registrate aqui</a>
+            </div>
+
+            <div class="login-hint login-hint--stacked">
+              <p>Eres administrador?</p>
+              <a href="#/admin-access" class="btn btn-secondary btn-full">Acceso administrativo</a>
             </div>
           </div>
-
         </div>
       </div>
     `;
   },
 
   init() {
-    const form        = document.getElementById('login-form');
-    const emailInput  = document.getElementById('login-email');
-    const passInput   = document.getElementById('login-password');
-    const toggleBtn   = document.getElementById('toggle-password');
-    const errorEl     = document.getElementById('login-error');
-    const errorText   = document.getElementById('login-error-text');
-    const loginBtn    = document.getElementById('login-btn');
-    const btnText     = document.getElementById('login-btn-text');
-    const btnSpinner  = document.getElementById('login-btn-spinner');
+    const form = document.getElementById('login-form');
+    const emailInput = document.getElementById('login-email');
+    const passInput = document.getElementById('login-password');
+    const toggleBtn = document.getElementById('toggle-password');
+    const errorEl = document.getElementById('login-error');
+    const errorText = document.getElementById('login-error-text');
+    const loginBtn = document.getElementById('login-btn');
+    const btnText = document.getElementById('login-btn-text');
+    const btnSpinner = document.getElementById('login-btn-spinner');
 
-    /* Toggle visibilidad contraseña */
     toggleBtn.addEventListener('click', () => {
       const isPass = passInput.type === 'password';
       passInput.type = isPass ? 'text' : 'password';
-      toggleBtn.setAttribute('aria-label', isPass ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      toggleBtn.setAttribute('aria-label', isPass ? 'Ocultar contrasena' : 'Mostrar contrasena');
     });
 
-    /* Ocultar error al escribir */
     [emailInput, passInput].forEach(el => {
       el.addEventListener('input', () => {
         errorEl.classList.add('hidden');
       });
     });
 
-    /* Submit */
     form.addEventListener('submit', async e => {
       e.preventDefault();
 
-      const email    = emailInput.value.trim();
+      const email = emailInput.value.trim();
       const password = passInput.value;
 
       if (!email || !password) {
@@ -166,9 +167,8 @@ window.NutriPages['login'] = {
         return;
       }
 
-      /* Estado de carga */
       loginBtn.disabled = true;
-      btnText.textContent = 'Verificando…';
+      btnText.textContent = 'Verificando...';
       btnSpinner.classList.remove('hidden');
       errorEl.classList.add('hidden');
 
@@ -176,7 +176,7 @@ window.NutriPages['login'] = {
 
       if (result.ok) {
         const session = Auth.getSession();
-        btnText.textContent = '¡Bienvenido!';
+        btnText.textContent = 'Bienvenido';
         Toast.success(`Bienvenido, ${session.firstName}`);
 
         setTimeout(() => {

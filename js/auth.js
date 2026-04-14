@@ -1,32 +1,37 @@
 /* ============================================================
-   NutriControl — Autenticación Segura (Supabase Auth)
-   Login/logout seguro utilizando las credenciales nativas.
-   Mantenemos sessionStorage como caché local para la SPA.
+   NutriControl - Autenticacion Segura (Supabase Auth)
    ============================================================ */
 
 const Auth = {
+  adminCredentialConfig: {
+    adminId: 'ADM-2026-NUTRI',
+    accessKey: 'NUTRI-ROOT-2026',
+  },
 
-  /**
-   * Inicializa el listener de estado para sincronizar inicios de sesión por Links/Email.
-   */
   initListener() {
     sb.auth.onAuthStateChange(async (event, authSession) => {
       if (event === 'SIGNED_IN' && authSession?.user) {
-        // Si no hay sesión local (ej: vino de un link de email directo)
         if (!this.getSession()) {
           const { data: user } = await sb.from('users').select('*').eq('id', authSession.user.id).maybeSingle();
+
           if (user) {
             const localSession = {
-              userId:    user.id,
-              role:      user.role,
+              userId: user.id,
+              role: user.role,
               firstName: user.first_name,
-              lastName:  user.last_name,
-              loginAt:   new Date().toISOString(),
+              lastName: user.last_name,
+              loginAt: new Date().toISOString(),
             };
+
             sessionStorage.setItem('nutri_session', JSON.stringify(localSession));
-            
-            // Si la URL tiene el token de recuperación o login, limpiar hash y redirigir
-            if (window.location.hash.includes('access_token=') || window.location.hash === '' || window.location.hash === '#/login' || window.location.hash === '#/register') {
+
+            if (
+              window.location.hash.includes('access_token=') ||
+              window.location.hash === '' ||
+              window.location.hash.startsWith('#/login') ||
+              window.location.hash.startsWith('#/register') ||
+              window.location.hash.startsWith('#/admin-access')
+            ) {
               window.location.hash = user.role === 'admin' ? '#/admin/dashboard' : '#/patient/dashboard';
             }
           }
@@ -40,27 +45,19 @@ const Auth = {
     });
   },
 
-  /**
-   * Autentica al usuario contra Supabase Auth.
-   * @returns {{ ok:boolean, error?:string, role?:string }}
-   */
   async login(email, password) {
     if (!email || !password) {
-      return { ok: false, error: 'Por favor ingresa correo y contraseña.' };
+      return { ok: false, error: 'Por favor ingresa correo y contrasena.' };
     }
 
     try {
-      // 1. Iniciar sesión segura a nivel de red con Supabase Auth
       const { data: authData, error: authError } = await sb.auth.signInWithPassword({
         email: email.trim(),
-        password: password,
+        password,
       });
 
-      if (authError) {
-        throw authError; // Sera capturado por el catch
-      }
+      if (authError) throw authError;
 
-      // 2. Obtener el perfil de la tabla relacional (para roles, nombre, etc)
       const { data: user, error: dbError } = await sb
         .from('users')
         .select('*')
@@ -68,40 +65,49 @@ const Auth = {
         .maybeSingle();
 
       if (dbError || !user) {
-        // En caso excepcional que falte el registro DB
-        await sb.auth.signOut(); 
+        await sb.auth.signOut();
         return { ok: false, error: 'Hubo un error cargando el perfil del usuario.' };
       }
 
-      /* 3. Guardar sesión local de acceso rápido (UI) */
       const session = {
-        userId:    user.id,
-        role:      user.role,
+        userId: user.id,
+        role: user.role,
         firstName: user.first_name,
-        lastName:  user.last_name,
-        loginAt:   new Date().toISOString(),
+        lastName: user.last_name,
+        loginAt: new Date().toISOString(),
       };
-      sessionStorage.setItem('nutri_session', JSON.stringify(session));
 
-      Logger.logActivity('LOGIN', `Inicio de sesión (Supabase Auth): ${user.email} (${user.role})`);
+      sessionStorage.setItem('nutri_session', JSON.stringify(session));
+      Logger.logActivity('LOGIN', `Inicio de sesion (Supabase Auth): ${user.email} (${user.role})`);
 
       return { ok: true, role: user.role };
-
     } catch (err) {
       console.error('Supabase Auth login error:', err);
+
       if (err.message.includes('Invalid login credentials')) {
-        return { ok: false, error: 'Correo o contraseña incorrectos.' };
+        return { ok: false, error: 'Correo o contrasena incorrectos.' };
       }
+
       if (err.message.includes('Email not confirmed')) {
-        return { ok: false, error: 'Debes confirmar tu correo electrónico (si esto es un error, desactívalo en el Dashboard de Supabase).' };
+        return { ok: false, error: 'Debes confirmar tu correo electronico antes de ingresar.' };
       }
-      return { ok: false, error: 'Error de conexión. Intenta de nuevo.' };
+
+      return { ok: false, error: 'Error de conexion. Intenta de nuevo.' };
     }
   },
 
-  /**
-   * Registra un nuevo paciente utilizando Supabase Auth.
-   */
+  async loginAdmin(email, password) {
+    const result = await this.login(email, password);
+    if (!result.ok) return result;
+
+    if (result.role !== 'admin') {
+      await this.logout();
+      return { ok: false, error: 'Esta cuenta no tiene permisos de administrador.' };
+    }
+
+    return result;
+  },
+
   async register(email, password, firstName, lastName) {
     if (!email || !password || !firstName || !lastName) {
       return { ok: false, error: 'Por favor completa todos los campos.' };
@@ -110,23 +116,20 @@ const Auth = {
     const emailClean = email.toLowerCase().trim();
 
     try {
-      // 1. Crear el usuario en auth.users de Supabase
       const { data: authData, error: authError } = await sb.auth.signUp({
         email: emailClean,
-        password: password,
+        password,
         options: {
+          emailRedirectTo: this.getEmailConfirmationRedirect(),
           data: {
             first_name: firstName.trim(),
-            last_name: lastName.trim()
-          }
-        }
+            last_name: lastName.trim(),
+          },
+        },
       });
 
       if (authError) throw authError;
 
-      // ¡Importante! Aquí asumimos que el Trigger SQL insertará en public.users
-      
-      // 2. Insertar perfil del paciente (asociado al ID del User que generó Supabase)
       if (authData?.user) {
         const patientToInsert = {
           user_id: authData.user.id,
@@ -134,42 +137,91 @@ const Auth = {
           last_name: lastName.trim(),
           email: emailClean,
         };
+
         const { error: pErr } = await sb.from('patients').insert([patientToInsert]);
-        if (pErr) console.warn("Aviso al crear paciente relacional:", pErr);
+        if (pErr) console.warn('Aviso al crear paciente relacional:', pErr);
       }
 
-      Logger.logActivity('REGISTER', `Nuevo auto-registro pendiente confirmación: ${emailClean}`);
+      Logger.logActivity('REGISTER', `Nuevo auto-registro pendiente confirmacion: ${emailClean}`);
 
-      // Como los correos están activados, no hacemos auto login.
-      // Supabase enviará un correo de verificación.
       return { ok: true, requireEmail: true, message: 'Revisa tu bandeja de entrada para verificar tu cuenta.' };
-
     } catch (error) {
       console.error('Supabase Auth register error:', error);
+
       if (error.message.includes('User already registered') || error.message.includes('already exists')) {
-        return { ok: false, error: 'El correo ya está registrado.' };
+        return { ok: false, error: 'El correo ya esta registrado.' };
       }
-      return { ok: false, error: 'Error al registrar: ' + error.message };
+
+      return { ok: false, error: `Error al registrar: ${error.message}` };
     }
   },
 
-  /**
-   * Cierra la sesión local y en la red.
-   */
+  async registerAdmin({ email, password, firstName, lastName, adminId, accessKey }) {
+    if (!email || !password || !firstName || !lastName || !adminId || !accessKey) {
+      return { ok: false, error: 'Completa todos los campos y la credencial de administrador.' };
+    }
+
+    if (
+      adminId.trim() !== this.adminCredentialConfig.adminId ||
+      accessKey.trim() !== this.adminCredentialConfig.accessKey
+    ) {
+      return { ok: false, error: 'La credencial de administrador no es valida.' };
+    }
+
+    const emailClean = email.toLowerCase().trim();
+
+    try {
+      const { data: authData, error: authError } = await sb.auth.signUp({
+        email: emailClean,
+        password,
+        options: {
+          emailRedirectTo: this.getEmailConfirmationRedirect('admin'),
+          data: {
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            role: 'admin',
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      if (authData?.user) {
+        const { error: userError } = await sb.from('users').upsert([{
+          id: authData.user.id,
+          email: emailClean,
+          role: 'admin',
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          created_at: new Date().toISOString(),
+        }]);
+
+        if (userError) throw userError;
+      }
+
+      Logger.logActivity('REGISTER_ADMIN', `Nuevo administrador registrado: ${emailClean}`);
+      return { ok: true, requireEmail: true, message: 'Confirma tu correo para activar el acceso administrativo.' };
+    } catch (error) {
+      console.error('Supabase Auth register admin error:', error);
+
+      if (error.message.includes('User already registered') || error.message.includes('already exists')) {
+        return { ok: false, error: 'El correo ya esta registrado.' };
+      }
+
+      return { ok: false, error: `Error al registrar administrador: ${error.message}` };
+    }
+  },
+
   async logout() {
     const session = this.getSession();
     if (session) {
-      Logger.logActivity('LOGOUT', `Cierre de sesión: ${session.firstName} ${session.lastName}`);
+      Logger.logActivity('LOGOUT', `Cierre de sesion: ${session.firstName} ${session.lastName}`);
     }
-    // Borrar caché local
+
     sessionStorage.removeItem('nutri_session');
-    // Matar token de red de Supabase
     await sb.auth.signOut();
   },
 
-  /**
-   * Devuelve la sesión actual en memoria (lectura síncrona súper rápda para el UI).
-   */
   getSession() {
     try {
       return JSON.parse(sessionStorage.getItem('nutri_session'));
@@ -178,16 +230,10 @@ const Auth = {
     }
   },
 
-  /**
-   * ¿Hay sesión activa en UI?
-   */
   isAuthenticated() {
     return !!this.getSession();
   },
 
-  /**
-   * Guard de ruta para la SPA.
-   */
   requireAuth(requiredRole) {
     const session = this.getSession();
     if (!session) return false;
@@ -195,14 +241,19 @@ const Auth = {
     return true;
   },
 
-  /**
-   * Actualiza el nombre en la sesión (ej. tras editar perfil).
-   */
   updateSessionName(firstName, lastName) {
     const session = this.getSession();
     if (!session) return;
+
     session.firstName = firstName;
-    session.lastName  = lastName;
+    session.lastName = lastName;
     sessionStorage.setItem('nutri_session', JSON.stringify(session));
+  },
+
+  getEmailConfirmationRedirect(mode = 'patient') {
+    const baseUrl = `${window.location.origin}${window.location.pathname}`;
+    return mode === 'admin'
+      ? `${baseUrl}#/admin-access?confirmed=1`
+      : `${baseUrl}#/login?confirmed=1`;
   },
 };

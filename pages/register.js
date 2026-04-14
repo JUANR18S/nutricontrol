@@ -1,5 +1,5 @@
 /* ============================================================
-   NutriControl — Página de Registro de Usuario (Paciente)
+   NutriControl - Pagina de Registro de Usuario
    ============================================================ */
 window.NutriPages = window.NutriPages || {};
 
@@ -8,8 +8,6 @@ window.NutriPages['register'] = {
   render(container) {
     container.innerHTML = `
       <div class="login-page">
-
-        <!-- Fondo animado -->
         <div class="login-bg">
           <div class="blob blob-1"></div>
           <div class="blob blob-2"></div>
@@ -17,7 +15,6 @@ window.NutriPages['register'] = {
         </div>
 
         <div class="login-content">
-          <!-- Branding lateral -->
           <div class="login-brand">
             <div class="brand-logo-wrap">
               <div class="brand-logo">
@@ -27,10 +24,9 @@ window.NutriPages['register'] = {
               </div>
               <h1 class="brand-name">NutriControl</h1>
             </div>
-            <p class="brand-tagline">Únete a nuestra plataforma y lleva el control de tu evolución nutricional.</p>
+            <p class="brand-tagline">Unete a nuestra plataforma y lleva el control de tu evolucion nutricional.</p>
           </div>
 
-          <!-- Formulario -->
           <div class="glass-card login-card" style="max-width: 450px;">
             <div class="login-card__header">
               <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px">
@@ -43,9 +39,7 @@ window.NutriPages['register'] = {
             </div>
 
             <form id="register-form" class="login-form" novalidate>
-
               <div style="display:flex;gap:12px;">
-                <!-- Nombre -->
                 <div class="form-group" style="flex:1;">
                   <label for="reg-firstname">Nombre</label>
                   <div class="input-wrapper">
@@ -53,50 +47,45 @@ window.NutriPages['register'] = {
                   </div>
                 </div>
 
-                <!-- Apellido -->
                 <div class="form-group" style="flex:1;">
                   <label for="reg-lastname">Apellido</label>
                   <div class="input-wrapper">
-                    <input type="text" id="reg-lastname" name="last_name" placeholder="Ej: Pérez" required>
+                    <input type="text" id="reg-lastname" name="last_name" placeholder="Ej: Perez" required>
                   </div>
                 </div>
               </div>
 
-              <!-- Email -->
               <div class="form-group">
-                <label for="reg-email">Correo electrónico</label>
+                <label for="reg-email">Correo electronico</label>
                 <div class="input-wrapper">
                   <input type="email" id="reg-email" name="email" placeholder="tucorreo@ejemplo.com" required>
                 </div>
               </div>
 
-              <!-- Contraseña -->
               <div class="form-group">
-                <label for="reg-password">Contraseña</label>
+                <label for="reg-password">Contrasena</label>
                 <div class="input-wrapper">
-                  <input type="password" id="reg-password" name="password" placeholder="••••••••" required>
-                  <button type="button" id="toggle-reg-password" class="input-action" aria-label="Mostrar contraseña">
+                  <input type="password" id="reg-password" name="password" placeholder="........" required>
+                  <button type="button" id="toggle-reg-password" class="input-action" aria-label="Mostrar contrasena">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                   </button>
                 </div>
               </div>
 
-              <!-- Error -->
               <div id="reg-error" class="alert alert-danger hidden" role="alert">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
                 <span id="reg-error-text"></span>
               </div>
 
-              <!-- Submit -->
               <button type="submit" id="reg-btn" class="btn btn-primary btn-lg btn-full" style="margin-top: 10px;">
                 <span id="reg-btn-text">Registrarme</span>
                 <span id="reg-btn-spinner" class="spinner hidden"></span>
               </button>
-
             </form>
 
-            <div class="login-hint" style="margin-top: 20px; text-align: center;">
-              <p style="color: var(--text-secondary);">¿Ya tienes una cuenta? <a href="#/login" style="color:var(--accent);text-decoration:none;font-weight:600">Inicia sesión</a></p>
+            <div class="login-hint login-hint--stacked">
+              <p>Ya tienes una cuenta?</p>
+              <a href="#/login" class="btn btn-outline btn-full">Inicia sesion</a>
             </div>
           </div>
         </div>
@@ -105,94 +94,66 @@ window.NutriPages['register'] = {
   },
 
   init() {
-    const form        = document.getElementById('register-form');
-    const fnameInput  = document.getElementById('reg-firstname');
-    const lnameInput  = document.getElementById('reg-lastname');
-    const emailInput  = document.getElementById('reg-email');
-    const passInput   = document.getElementById('reg-password');
-    const toggleBtn   = document.getElementById('toggle-reg-password');
-    const errorEl     = document.getElementById('reg-error');
-    const errorText   = document.getElementById('reg-error-text');
-    const regBtn      = document.getElementById('reg-btn');
-    const btnText     = document.getElementById('reg-btn-text');
-    const btnSpinner  = document.getElementById('reg-btn-spinner');
+    const form = document.getElementById('register-form');
+    const fnameInput = document.getElementById('reg-firstname');
+    const lnameInput = document.getElementById('reg-lastname');
+    const emailInput = document.getElementById('reg-email');
+    const passInput = document.getElementById('reg-password');
+    const toggleBtn = document.getElementById('toggle-reg-password');
+    const errorEl = document.getElementById('reg-error');
+    const errorText = document.getElementById('reg-error-text');
+    const regBtn = document.getElementById('reg-btn');
+    const btnText = document.getElementById('reg-btn-text');
+    const btnSpinner = document.getElementById('reg-btn-spinner');
 
-    /* Toggle visibilidad contraseña */
     toggleBtn.addEventListener('click', () => {
       const isPass = passInput.type === 'password';
       passInput.type = isPass ? 'text' : 'password';
-      toggleBtn.setAttribute('aria-label', isPass ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      toggleBtn.setAttribute('aria-label', isPass ? 'Ocultar contrasena' : 'Mostrar contrasena');
     });
 
-    /* Ocultar error al escribir */
     [fnameInput, lnameInput, emailInput, passInput].forEach(el => {
       el.addEventListener('input', () => {
         errorEl.classList.add('hidden');
       });
     });
 
-    /* Submit */
     form.addEventListener('submit', async e => {
       e.preventDefault();
 
-      const fname    = fnameInput.value.trim();
-      const lname    = lnameInput.value.trim();
-      const email    = emailInput.value.trim();
+      const fname = fnameInput.value.trim();
+      const lname = lnameInput.value.trim();
+      const email = emailInput.value.trim();
       const password = passInput.value;
 
       if (!fname || !lname || !email || !password) {
         this._showError(errorEl, errorText, 'Por favor completa todos los campos.');
         return;
       }
-      
+
       if (password.length < 6) {
-        this._showError(errorEl, errorText, 'La contraseña debe tener al menos 6 caracteres.');
+        this._showError(errorEl, errorText, 'La contrasena debe tener al menos 6 caracteres.');
         return;
       }
 
-      /* Estado de carga */
       regBtn.disabled = true;
-      btnText.textContent = 'Creando cuenta…';
+      btnText.textContent = 'Creando cuenta...';
       btnSpinner.classList.remove('hidden');
       errorEl.classList.add('hidden');
 
       const result = await Auth.register(email, password, fname, lname);
 
       if (result.ok && result.requireEmail) {
-        // En lugar de redirigir, mostramos un mensaje para revisar el correo
-        btnText.textContent = '¡Registro Completo!';
-        btnSpinner.classList.add('hidden');
-        
-        // Bloquear los inputs para que no los vuelva a enviar por error
-        form.querySelectorAll('input').forEach(i => i.disabled = true);
-        
-        // Transformar la UI a modo éxito
-        const header = document.querySelector('.login-card__header');
-        header.innerHTML = `
-          <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px">
-            <div style="width:40px;height:40px;background:linear-gradient(135deg,#10b981,#059669);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(16,185,129,.3)">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
-            </div>
-          </div>
-          <h2>¡Revisa tu correo!</h2>
-          <p style="color:var(--accent); font-weight:500;">${result.message}</p>
-          <p style="font-size:0.85rem;">Hemos enviado un enlace de confirmación a <strong>${Utils.escapeHtml(email)}</strong>.</p>
-        `;
-        
-        // Ocultar formulario
-        form.innerHTML = `
-          <a href="#/login" class="btn btn-outline btn-full" style="margin-top:20px;text-align:center;">Volver al inicio de sesión</a>
-        `;
-        
-      } else if (result.ok) {
-      } else {
-        regBtn.disabled = false;
-        btnText.textContent = 'Registrarme';
-        btnSpinner.classList.add('hidden');
-        this._showError(errorEl, errorText, result.error);
-        form.classList.add('shake');
-        form.addEventListener('animationend', () => form.classList.remove('shake'), { once: true });
+        window.location.hash = `#/email-confirmation?email=${encodeURIComponent(email)}`;
+        return;
       }
+
+      regBtn.disabled = false;
+      btnText.textContent = 'Registrarme';
+      btnSpinner.classList.add('hidden');
+      this._showError(errorEl, errorText, result.error);
+      form.classList.add('shake');
+      form.addEventListener('animationend', () => form.classList.remove('shake'), { once: true });
     });
   },
 
