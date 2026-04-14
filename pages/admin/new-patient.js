@@ -148,7 +148,7 @@ window.NutriPages['admin-new-patient'] = {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return this._showError(errorText, errorEl, 'El correo electrónico no es válido.');
       }
-      if (Store.emailExists(email)) {
+      if (await Store.emailExists(email)) {
         return this._showError(errorText, errorEl, 'Este correo ya está registrado en el sistema.');
       }
       if (password.length < 6) {
@@ -162,27 +162,20 @@ window.NutriPages['admin-new-patient'] = {
       submitBtn.disabled  = true;
       submitText.textContent = 'Creando…';
       submitSpinner.classList.remove('hidden');
-      await new Promise(r => setTimeout(r, 500));
-
       const session = Auth.getSession();
-      const userId  = Utils.generateId();
-      const patientId = Utils.generateId();
 
       /* Crear usuario */
-      Store.addUser({
-        id: userId,
+      const user = await Store.addUser({
         email,
         password: Utils.hashPassword(password),
         role: 'patient',
         firstName,
         lastName,
-        createdAt: new Date().toISOString(),
       });
 
       /* Crear perfil de paciente */
-      Store.addPatient({
-        id: patientId,
-        userId,
+      const patient = await Store.addPatient({
+        userId: user.id,
         firstName,
         lastName,
         email,
@@ -190,12 +183,11 @@ window.NutriPages['admin-new-patient'] = {
         birthDate,
         gender,
         objective,
-        createdAt: new Date().toISOString(),
         createdBy: session.userId,
       });
 
       Toast.success('Paciente creado', `${firstName} ${lastName} fue registrado exitosamente.`);
-      App.navigate(`#/admin/patients/${patientId}`);
+      App.navigate(`#/admin/patients/${patient.id}`);
     });
   },
 

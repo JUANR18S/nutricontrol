@@ -5,9 +5,9 @@ window.NutriPages = window.NutriPages || {};
 
 window.NutriPages['admin-new-control'] = {
 
-  render(container) {
+  async render(container) {
     const session  = Auth.getSession();
-    const patients = Store.getPatients();
+    const patients = await Store.getPatients();
 
     /* Pre-selección de paciente desde URL: #/admin/controls/new?patientId=xxx */
     const hash       = window.location.hash;
@@ -202,11 +202,9 @@ window.NutriPages['admin-new-control'] = {
       submitBtn.disabled = true;
       submitText.textContent = 'Guardando…';
       submitSpinner.classList.remove('hidden');
-      await new Promise(r => setTimeout(r, 500));
 
       const bmi = Utils.calculateBMI(weight, height);
-      const control = Store.addControl({
-        id:                Utils.generateId(),
+      await Store.addControl({
         patientId,
         date,
         weight,
@@ -218,10 +216,8 @@ window.NutriPages['admin-new-control'] = {
         notes,
         dietPlan:          diet,
         registeredBy:      session.userId,
-        createdAt:         new Date().toISOString(),
       });
 
-      const patient = Store.getPatientById(patientId);
       Toast.success('Control registrado', `Control del ${Utils.formatDate(date)} guardado exitosamente.`);
       App.navigate(`#/admin/patients/${patientId}`);
     });

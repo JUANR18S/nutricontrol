@@ -5,9 +5,9 @@ window.NutriPages = window.NutriPages || {};
 
 window.NutriPages['patient-profile'] = {
 
-  render(container) {
+  async render(container) {
     const session = Auth.getSession();
-    const patient = Store.getPatientByUserId(session.userId);
+    const patient = await Store.getPatientByUserId(session.userId);
 
     if (!patient) {
       container.innerHTML = Layout.wrap(session, 'patient/profile', `
@@ -22,7 +22,7 @@ window.NutriPages['patient-profile'] = {
     }
 
     const age      = patient.birthDate ? Utils.calculateAge(patient.birthDate) : null;
-    const controls = Store.getControlsByPatient(patient.id);
+    const controls = await Store.getControlsByPatient(patient.id);
     const initials = Utils.initials(patient.firstName, patient.lastName);
 
     const content = `

@@ -5,9 +5,9 @@ window.NutriPages = window.NutriPages || {};
 
 window.NutriPages['admin-admins'] = {
 
-  render(container) {
+  async render(container) {
     const session = Auth.getSession();
-    const admins  = Store.getAdmins();
+    const admins  = await Store.getAdmins();
 
     const rows = admins.map(admin => {
       const isMe = admin.id === session.userId;
@@ -100,9 +100,9 @@ window.NutriPages['admin-admins'] = {
           message: `¿Deseas eliminar al administrador "${name}"? Esta acción no se puede deshacer.`,
           confirmText: 'Sí, eliminar',
           danger: true,
-          onConfirm(modalId) {
+          async onConfirm(modalId) {
             Modal.close(modalId);
-            Store.deleteUser(id);
+            await Store.deleteUser(id);
             Toast.success('Administrador eliminado', name + ' fue eliminado del sistema.');
             App.navigate('#/admin/admins');
           },

@@ -1,15 +1,38 @@
 /* ============================================================
-   NutriControl — Listado de Pacientes (Admin)
+   NutriControl — Listado de Pacientes (Admin) (async/Supabase)
    ============================================================ */
 window.NutriPages = window.NutriPages || {};
 
 window.NutriPages['admin-patients'] = {
 
-  _query: '',
+  /* Caché local para búsqueda sin re-fetch */
+  _allPatients: [],
+  _controlsMap: {},
 
-  render(container) {
-    const session  = Auth.getSession();
-    const patients = Store.getPatients();
+  async render(container) {
+    const session = Auth.getSession();
+
+    /* Loading */
+    container.innerHTML = Layout.wrap(session, 'admin/patients',
+      '<div style="display:flex;align-items:center;justify-content:center;padding:80px 0"><div class="spinner"></div></div>'
+    );
+    Layout.init();
+
+    /* Fetch */
+    const [patients, controls] = await Promise.all([
+      Store.getPatients(),
+      Store.getControls(),
+    ]);
+
+    this._allPatients = patients;
+
+    /* Mapa: patientId → último control */
+    this._controlsMap = {};
+    controls.forEach(c => {
+      if (!this._controlsMap[c.patientId]) {
+        this._controlsMap[c.patientId] = c; // ya ordenados desc por fecha
+      }
+    });
 
     const tableHtml = this._buildTable(patients, '');
 
@@ -48,12 +71,12 @@ window.NutriPages['admin-patients'] = {
 
     searchInput.addEventListener('input', Utils.debounce(() => {
       const q = searchInput.value.trim().toLowerCase();
-      const patients = Store.getPatients().filter(p =>
+      const filtered = this._allPatients.filter(p =>
         `${p.firstName} ${p.lastName}`.toLowerCase().includes(q) ||
-        p.email.toLowerCase().includes(q)
+        (p.email && p.email.toLowerCase().includes(q))
       );
       const container = document.getElementById('patients-table-container');
-      if (container) container.innerHTML = this._buildTable(patients, q);
+      if (container) container.innerHTML = this._buildTable(filtered, q);
       this._bindActions();
     }, 250));
 
@@ -79,7 +102,7 @@ window.NutriPages['admin-patients'] = {
     }
 
     const rows = patients.map(p => {
-      const lastControl = Store.getLastControlByPatient(p.id);
+      const lastControl = this._controlsMap[p.id] || null;
       const age = p.birthDate ? Utils.calculateAge(p.birthDate) : '—';
       const gender = Utils.genderLabel(p.gender);
 
@@ -90,7 +113,7 @@ window.NutriPages['admin-patients'] = {
               <div class="avatar avatar-sm">${Utils.escapeHtml(Utils.initials(p.firstName, p.lastName))}</div>
               <div>
                 <div class="font-medium">${Utils.escapeHtml(p.firstName)} ${Utils.escapeHtml(p.lastName)}</div>
-                <div class="text-xs text-muted">${Utils.escapeHtml(p.email)}</div>
+                <div class="text-xs text-muted">${Utils.escapeHtml(p.email || '')}</div>
               </div>
             </div>
           </td>
@@ -146,14 +169,9 @@ window.NutriPages['admin-patients'] = {
           message: `¿Seguro que deseas eliminar a "${name}"? Se eliminarán también todos sus controles. Esta acción no se puede deshacer.`,
           confirmText: 'Sí, eliminar',
           danger: true,
-          onConfirm(modalId) {
+          async onConfirm(modalId) {
             Modal.close(modalId);
-            const patient = Store.getPatientById(id);
-            if (patient) {
-              Store.deleteUser(patient.userId);
-              Store.getControlsByPatient(id).forEach(c => Store.deleteControl(c.id));
-            }
-            Store.deletePatient(id);
+            await Store.deletePatient(id);
             Toast.success('Paciente eliminado', name + ' fue eliminado del sistema.');
             App.navigate('#/admin/patients');
           },

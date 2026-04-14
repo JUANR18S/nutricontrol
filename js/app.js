@@ -1,5 +1,6 @@
 /* ============================================================
    NutriControl — Router principal (SPA hash-based)
+   Versión async para Supabase
    ============================================================ */
 
 const App = {
@@ -13,6 +14,7 @@ const App = {
     '/admin/controls/new':  { page: 'admin-new-control',  role: 'admin',  title: 'Nuevo Control' },
     '/admin/admins':        { page: 'admin-admins',       role: 'admin',  title: 'Administradores' },
     '/admin/admins/new':    { page: 'admin-new-admin',    role: 'admin',  title: 'Nuevo Administrador' },
+    '/admin/logs':          { page: 'admin-logs',         role: 'admin',  title: 'Logs de Actividad' },
     '/patient/dashboard':   { page: 'patient-dashboard',  role: 'patient',title: 'Inicio' },
     '/patient/profile':     { page: 'patient-profile',    role: 'patient',title: 'Mi Perfil' },
     '/patient/history':     { page: 'patient-history',    role: 'patient',title: 'Mis Controles' },
@@ -31,14 +33,14 @@ const App = {
   _currentPath: null,
 
   /* ─────────────────────────────────────────────────────── */
-  init() {
-    Store.init();
+  async init() {
+    await Store.init();
     window.addEventListener('hashchange', () => this._handleRoute());
-    this._handleRoute();
+    await this._handleRoute();
   },
 
   /* ─────────────────────────────────────────────────────── */
-  _handleRoute() {
+  async _handleRoute() {
     const hash = window.location.hash || '#/login';
     const path = hash.slice(1);
 
@@ -85,18 +87,18 @@ const App = {
     }
 
     this._currentPath = path;
-    this._renderPage(config.page, params);
+    await this._renderPage(config.page, params);
   },
 
   /* ─────────────────────────────────────────────────────── */
-  _renderPage(pageName, params = {}) {
+  async _renderPage(pageName, params = {}) {
     const appEl   = document.getElementById('app');
     const session = Auth.getSession();
     const pages   = window.NutriPages ?? {};
 
     if (pages[pageName]) {
       appEl.innerHTML = '';
-      pages[pageName].render(appEl, params);
+      await pages[pageName].render(appEl, params);
       if (typeof pages[pageName].init === 'function') {
         pages[pageName].init(params);
       }

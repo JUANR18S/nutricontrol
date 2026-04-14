@@ -5,9 +5,9 @@ window.NutriPages = window.NutriPages || {};
 
 window.NutriPages['patient-history'] = {
 
-  render(container) {
+  async render(container) {
     const session = Auth.getSession();
-    const patient = Store.getPatientByUserId(session.userId);
+    const patient = await Store.getPatientByUserId(session.userId);
 
     if (!patient) {
       container.innerHTML = Layout.wrap(session, 'patient/history', `
@@ -21,7 +21,7 @@ window.NutriPages['patient-history'] = {
       return;
     }
 
-    const controls = Store.getControlsByPatient(patient.id);
+    const controls = await Store.getControlsByPatient(patient.id);
 
     const tableRows = controls.map((ctrl, idx) => {
       const bmiCat   = Utils.getBMICategory(ctrl.bmi);
@@ -124,8 +124,8 @@ window.NutriPages['patient-history'] = {
 
   init() {
     document.querySelectorAll('.btn-view-ctrl').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const ctrl   = Store.getControlById(btn.dataset.id);
+      btn.addEventListener('click', async () => {
+        const ctrl   = await Store.getControlById(btn.dataset.id);
         if (!ctrl) return;
         const bmiCat = Utils.getBMICategory(ctrl.bmi);
 

@@ -5,9 +5,9 @@ window.NutriPages = window.NutriPages || {};
 
 window.NutriPages['admin-patient-detail'] = {
 
-  render(container, params) {
+  async render(container, params) {
     const session = Auth.getSession();
-    const patient = Store.getPatientById(params.id);
+    const patient = await Store.getPatientById(params.id);
 
     if (!patient) {
       container.innerHTML = Layout.wrap(session, 'admin/patients', `
@@ -21,7 +21,7 @@ window.NutriPages['admin-patient-detail'] = {
       return;
     }
 
-    const controls  = Store.getControlsByPatient(patient.id);
+    const controls  = await Store.getControlsByPatient(patient.id);
     const age       = patient.birthDate ? Utils.calculateAge(patient.birthDate) : null;
     const lastCtrl  = controls[0] ?? null;
 
@@ -208,9 +208,9 @@ window.NutriPages['admin-patient-detail'] = {
           message: `¿Seguro que deseas eliminar el control del ${date}? Esta acción no se puede deshacer.`,
           confirmText: 'Sí, eliminar',
           danger: true,
-          onConfirm(modalId) {
+          async onConfirm(modalId) {
             Modal.close(modalId);
-            Store.deleteControl(id);
+            await Store.deleteControl(id);
             Toast.success('Control eliminado', `El control del ${date} fue eliminado.`);
             App.navigate(`#/admin/patients/${patientId}`);
           },

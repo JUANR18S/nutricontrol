@@ -9,9 +9,9 @@ window.NutriPages = window.NutriPages || {};
 
 window.NutriPages['admin-edit-patient'] = {
 
-  render(container, params) {
+  async render(container, params) {
     const session = Auth.getSession();
-    const patient = Store.getPatientById(params.id);
+    const patient = await Store.getPatientById(params.id);
 
     /* Paciente no encontrado */
     if (!patient) {
@@ -156,7 +156,7 @@ window.NutriPages['admin-edit-patient'] = {
       e.preventDefault();
       errorEl.classList.add('hidden');
 
-      const patient = Store.getPatientById(params.id);
+      const patient = await Store.getPatientById(params.id);
       if (!patient) {
         return this._showError(errorText, errorEl, 'El paciente ya no existe.');
       }
@@ -179,7 +179,7 @@ window.NutriPages['admin-edit-patient'] = {
         return this._showError(errorText, errorEl, 'El correo electrónico no es válido.');
       }
       /* Verificar email duplicado excluyendo el usuario actual */
-      if (Store.emailExists(email, patient.userId)) {
+      if (await Store.emailExists(email, patient.userId)) {
         return this._showError(errorText, errorEl, 'Este correo ya está registrado por otro usuario.');
       }
       /* Contraseña solo si la llenaron */
@@ -196,10 +196,9 @@ window.NutriPages['admin-edit-patient'] = {
       submitBtn.disabled = true;
       submitText.textContent = 'Guardando…';
       submitSpinner.classList.remove('hidden');
-      await new Promise(r => setTimeout(r, 500));
 
       /* ── Actualizar perfil de paciente ───────────────────── */
-      Store.updatePatient(patient.id, {
+      await Store.updatePatient(patient.id, {
         firstName,
         lastName,
         email,
@@ -214,7 +213,7 @@ window.NutriPages['admin-edit-patient'] = {
       if (password) {
         userUpdates.password = Utils.hashPassword(password);
       }
-      Store.updateUser(patient.userId, userUpdates);
+      await Store.updateUser(patient.userId, userUpdates);
 
       /* ── Actualizar sesión si el paciente editado está logueado ─ */
       const currentSession = Auth.getSession();

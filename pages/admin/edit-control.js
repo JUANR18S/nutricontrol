@@ -8,9 +8,9 @@ window.NutriPages = window.NutriPages || {};
 
 window.NutriPages['admin-edit-control'] = {
 
-  render(container, params) {
+  async render(container, params) {
     const session = Auth.getSession();
-    const control = Store.getControlById(params.id);
+    const control = await Store.getControlById(params.id);
 
     /* Control no encontrado */
     if (!control) {
@@ -25,7 +25,7 @@ window.NutriPages['admin-edit-control'] = {
       return;
     }
 
-    const patient = Store.getPatientById(control.patientId);
+    const patient = await Store.getPatientById(control.patientId);
     const patientName = patient
       ? `${Utils.escapeHtml(patient.firstName)} ${Utils.escapeHtml(patient.lastName)}`
       : 'Paciente desconocido';
@@ -181,7 +181,7 @@ window.NutriPages['admin-edit-control'] = {
       e.preventDefault();
       errorEl.classList.add('hidden');
 
-      const control = Store.getControlById(params.id);
+      const control = await Store.getControlById(params.id);
       if (!control) {
         return this._showError(errorText, errorEl, 'El control ya no existe.');
       }
@@ -204,11 +204,10 @@ window.NutriPages['admin-edit-control'] = {
       submitBtn.disabled = true;
       submitText.textContent = 'Guardando…';
       submitSpinner.classList.remove('hidden');
-      await new Promise(r => setTimeout(r, 500));
 
       const bmi = Utils.calculateBMI(weight, height);
 
-      Store.updateControl(control.id, {
+      await Store.updateControl(control.id, {
         date,
         weight,
         height,

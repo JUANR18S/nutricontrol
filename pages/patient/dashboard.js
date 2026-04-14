@@ -5,9 +5,9 @@ window.NutriPages = window.NutriPages || {};
 
 window.NutriPages['patient-dashboard'] = {
 
-  render(container) {
+  async render(container) {
     const session = Auth.getSession();
-    const patient = Store.getPatientByUserId(session.userId);
+    const patient = await Store.getPatientByUserId(session.userId);
 
     /* ── Sin perfil asociado ────────────────────────────── */
     if (!patient) {
@@ -22,7 +22,7 @@ window.NutriPages['patient-dashboard'] = {
       return;
     }
 
-    const controls   = Store.getControlsByPatient(patient.id);
+    const controls   = await Store.getControlsByPatient(patient.id);
     const lastCtrl   = controls[0] ?? null;
     const age        = patient.birthDate ? Utils.calculateAge(patient.birthDate) : null;
 

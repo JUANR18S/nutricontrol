@@ -1,17 +1,34 @@
 /* ============================================================
-   NutriControl — Dashboard del Administrador
+   NutriControl — Dashboard del Administrador (async/Supabase)
    ============================================================ */
 window.NutriPages = window.NutriPages || {};
 
 window.NutriPages['admin-dashboard'] = {
 
-  render(container) {
-    const session  = Auth.getSession();
-    const stats    = Store.getStats();
+  async render(container) {
+    const session = Auth.getSession();
 
-    /* Últimos controles */
-    const recentRows = stats.recentControls.map(ctrl => {
-      const p      = Store.getPatientById(ctrl.patientId);
+    /* Loading */
+    container.innerHTML = Layout.wrap(session, 'admin/dashboard',
+      '<div style="display:flex;align-items:center;justify-content:center;padding:80px 0"><div class="spinner"></div></div>'
+    );
+    Layout.init();
+
+    /* Fetch data */
+    const [stats, controls, patients] = await Promise.all([
+      Store.getStats(),
+      Store.getControls(),
+      Store.getPatients(),
+    ]);
+
+    /* Mapa rápido de pacientes */
+    const patientsMap = {};
+    patients.forEach(p => { patientsMap[p.id] = p; });
+
+    /* Últimos 5 controles */
+    const recent = controls.slice(0, 5);
+    const recentRows = recent.map(ctrl => {
+      const p      = patientsMap[ctrl.patientId];
       const bmiCat = Utils.getBMICategory(ctrl.bmi);
       const name   = p ? `${p.firstName} ${p.lastName}` : 'Desconocido';
       const ini    = p ? Utils.initials(p.firstName, p.lastName) : '?';
@@ -115,7 +132,7 @@ window.NutriPages['admin-dashboard'] = {
           </h3>
           <a href="#/admin/patients" class="btn btn-ghost btn-sm">Ver todos los pacientes →</a>
         </div>
-        ${stats.recentControls.length > 0 ? `
+        ${recent.length > 0 ? `
           <div class="table-wrapper">
             <table>
               <thead>

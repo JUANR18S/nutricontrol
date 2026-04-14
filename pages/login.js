@@ -174,17 +174,15 @@ window.NutriPages['login'] = {
       btnSpinner.classList.remove('hidden');
       errorEl.classList.add('hidden');
 
-      /* Simular latencia de red */
-      await new Promise(r => setTimeout(r, 700));
+      const result = await Auth.login(email, password);
 
-      const result = Auth.login(email, password);
-
-      if (result.success) {
+      if (result.ok) {
+        const session = Auth.getSession();
         btnText.textContent = '¡Bienvenido!';
-        Toast.success(`Bienvenido, ${result.session.firstName}`);
+        Toast.success(`Bienvenido, ${session.firstName}`);
 
         setTimeout(() => {
-          window.location.hash = result.session.role === 'admin'
+          window.location.hash = result.role === 'admin'
             ? '#/admin/dashboard'
             : '#/patient/dashboard';
         }, 400);

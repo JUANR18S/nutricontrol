@@ -131,7 +131,7 @@ function _adminFormInit(adminUser = null) {
 
     if (!firstName || !lastName || !email) return showErr('Por favor completa todos los campos obligatorios.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showErr('El correo electrónico no es válido.');
-    if (Store.emailExists(email, isEdit ? adminUser.id : null)) return showErr('Este correo ya está en uso por otro usuario.');
+    if (await Store.emailExists(email, isEdit ? adminUser.id : null)) return showErr('Este correo ya está en uso por otro usuario.');
 
     if (!isEdit && !password) return showErr('La contraseña es obligatoria.');
     if (password && password.length < 6) return showErr('La contraseña debe tener al menos 6 caracteres.');
@@ -141,24 +141,21 @@ function _adminFormInit(adminUser = null) {
     submitBtn.disabled = true;
     submitText.textContent = isEdit ? 'Guardando…' : 'Creando…';
     submitSpinner.classList.remove('hidden');
-    await new Promise(r => setTimeout(r, 450));
 
     if (isEdit) {
       const updates = { firstName, lastName, email };
       if (password) updates.password = Utils.hashPassword(password);
-      Store.updateUser(adminUser.id, updates);
+      await Store.updateUser(adminUser.id, updates);
       /* Actualizar sesión si se está editando a sí mismo */
       if (adminUser.id === session.userId) Auth.updateSessionName(firstName, lastName);
       Toast.success('Administrador actualizado', `${firstName} ${lastName} fue modificado.`);
     } else {
-      Store.addUser({
-        id:        Utils.generateId(),
+      await Store.addUser({
         email,
         password:  Utils.hashPassword(password),
         role:      'admin',
         firstName,
         lastName,
-        createdAt: new Date().toISOString(),
       });
       Toast.success('Administrador creado', `${firstName} ${lastName} fue registrado como administrador.`);
     }
@@ -174,8 +171,8 @@ window.NutriPages['admin-new-admin'] = {
 };
 
 window.NutriPages['admin-edit-admin'] = {
-  render(container, params) {
-    const admin = Store.getUserById(params.id);
+  async render(container, params) {
+    const admin = await Store.getUserById(params.id);
     if (!admin || admin.role !== 'admin') {
       const session = Auth.getSession();
       container.innerHTML = Layout.wrap(session, 'admin/admins', `
@@ -189,8 +186,8 @@ window.NutriPages['admin-edit-admin'] = {
     }
     _adminForm(container, admin);
   },
-  init(params) {
-    const admin = Store.getUserById(params.id);
+  async init(params) {
+    const admin = await Store.getUserById(params.id);
     if (admin) _adminFormInit(admin);
   },
 };

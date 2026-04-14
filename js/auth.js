@@ -1,91 +1,100 @@
 /* ============================================================
-   NutriControl — Autenticación y manejo de sesión
+   NutriControl — Autenticación (Supabase DB + sessionStorage)
+   Login/logout contra la tabla 'users' en PostgreSQL.
+   La sesión se almacena en sessionStorage (como antes).
    ============================================================ */
+
 const Auth = {
 
-  SESSION_KEY: 'nutri_session',
-
-  /* ── Login ─────────────────────────────────────────────── */
-  login(email, password) {
-    const user = Store.getUserByEmail(email);
-
-    if (!user) {
-      return { success: false, error: 'Correo o contraseña incorrectos.' };
+  /**
+   * Autentica al usuario contra la tabla 'users' en Supabase.
+   * @returns {{ ok:boolean, error?:string, role?:string }}
+   */
+  async login(email, password) {
+    if (!email || !password) {
+      return { ok: false, error: 'Por favor ingresa correo y contraseña.' };
     }
 
-    if (user.password !== Utils.hashPassword(password)) {
-      return { success: false, error: 'Correo o contraseña incorrectos.' };
+    const hash = Utils.hashPassword(password);
+
+    const { data: user, error } = await sb
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
+
+    if (error) {
+      console.error('Auth login error:', error);
+      return { ok: false, error: 'Error de conexión. Intenta de nuevo.' };
     }
 
+    if (!user || user.password !== hash) {
+      return { ok: false, error: 'Correo o contraseña incorrectos.' };
+    }
+
+    /* Guardar sesión en sessionStorage */
     const session = {
       userId:    user.id,
-      email:     user.email,
       role:      user.role,
-      firstName: user.firstName,
-      lastName:  user.lastName,
+      firstName: user.first_name,
+      lastName:  user.last_name,
       loginAt:   new Date().toISOString(),
     };
+    sessionStorage.setItem('nutri_session', JSON.stringify(session));
 
-    sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
-    return { success: true, session };
+    // Registrar log de actividad
+    Logger.logActivity('LOGIN', `Inicio de sesión: ${user.email} (${user.role})`);
+
+    return { ok: true, role: user.role };
   },
 
-  /* ── Logout ────────────────────────────────────────────── */
+  /**
+   * Cierra la sesión.
+   */
   logout() {
-    sessionStorage.removeItem(this.SESSION_KEY);
-    window.location.hash = '#/login';
+    const session = this.getSession();
+    if (session) {
+      Logger.logActivity('LOGOUT', `Cierre de sesión: ${session.firstName} ${session.lastName}`);
+    }
+    sessionStorage.removeItem('nutri_session');
   },
 
-  /* ── Sesión actual ─────────────────────────────────────── */
+  /**
+   * Devuelve la sesión actual (síncrono — lee de sessionStorage).
+   */
   getSession() {
     try {
-      const raw = sessionStorage.getItem(this.SESSION_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
+      return JSON.parse(sessionStorage.getItem('nutri_session'));
+    } catch {
+      return null;
+    }
   },
 
+  /**
+   * ¿Hay sesión activa?
+   */
+  isAuthenticated() {
+    return !!this.getSession();
+  },
+
+  /**
+   * Guard de ruta: verifica autenticación y rol.
+   */
+  requireAuth(requiredRole) {
+    const session = this.getSession();
+    if (!session) return false;
+    if (requiredRole && session.role !== requiredRole) return false;
+    return true;
+  },
+
+  /**
+   * Actualiza el nombre en la sesión (ej. cuando el admin edita su perfil).
+   */
   updateSessionName(firstName, lastName) {
     const session = this.getSession();
     if (!session) return;
     session.firstName = firstName;
     session.lastName  = lastName;
-    sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
-  },
-
-  /* ── Helpers de rol ────────────────────────────────────── */
-  isAuthenticated() { return !!this.getSession(); },
-  isAdmin()         { return this.getSession()?.role === 'admin'; },
-  isPatient()       { return this.getSession()?.role === 'patient'; },
-
-  /* ── Guard de ruta ─────────────────────────────────────── */
-  requireAuth(requiredRole = null) {
-    const session = this.getSession();
-
-    if (!session) {
-      window.location.hash = '#/login';
-      return false;
-    }
-
-    if (requiredRole && session.role !== requiredRole) {
-      window.location.hash = session.role === 'admin'
-        ? '#/admin/dashboard'
-        : '#/patient/dashboard';
-      return false;
-    }
-
-    return true;
-  },
-
-  /* ── Cambio de contraseña ──────────────────────────────── */
-  changePassword(userId, currentPassword, newPassword) {
-    const user = Store.getUserById(userId);
-    if (!user) return { success: false, error: 'Usuario no encontrado.' };
-
-    if (user.password !== Utils.hashPassword(currentPassword)) {
-      return { success: false, error: 'La contraseña actual es incorrecta.' };
-    }
-
-    Store.updateUser(userId, { password: Utils.hashPassword(newPassword) });
-    return { success: true };
+    sessionStorage.setItem('nutri_session', JSON.stringify(session));
   },
 };
