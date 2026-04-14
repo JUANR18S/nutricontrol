@@ -7,6 +7,40 @@
 const Auth = {
 
   /**
+   * Inicializa el listener de estado para sincronizar inicios de sesión por Links/Email.
+   */
+  initListener() {
+    sb.auth.onAuthStateChange(async (event, authSession) => {
+      if (event === 'SIGNED_IN' && authSession?.user) {
+        // Si no hay sesión local (ej: vino de un link de email directo)
+        if (!this.getSession()) {
+          const { data: user } = await sb.from('users').select('*').eq('id', authSession.user.id).maybeSingle();
+          if (user) {
+            const localSession = {
+              userId:    user.id,
+              role:      user.role,
+              firstName: user.first_name,
+              lastName:  user.last_name,
+              loginAt:   new Date().toISOString(),
+            };
+            sessionStorage.setItem('nutri_session', JSON.stringify(localSession));
+            
+            // Si la URL tiene el token de recuperación o login, limpiar hash y redirigir
+            if (window.location.hash.includes('access_token=') || window.location.hash === '' || window.location.hash === '#/login' || window.location.hash === '#/register') {
+              window.location.hash = user.role === 'admin' ? '#/admin/dashboard' : '#/patient/dashboard';
+            }
+          }
+        }
+      } else if (event === 'SIGNED_OUT') {
+        sessionStorage.removeItem('nutri_session');
+        if (!window.location.hash.includes('login') && !window.location.hash.includes('register')) {
+          window.location.hash = '#/login';
+        }
+      }
+    });
+  },
+
+  /**
    * Autentica al usuario contra Supabase Auth.
    * @returns {{ ok:boolean, error?:string, role?:string }}
    */
@@ -104,10 +138,11 @@ const Auth = {
         if (pErr) console.warn("Aviso al crear paciente relacional:", pErr);
       }
 
-      Logger.logActivity('REGISTER', `Nuevo auto-registro (Supabase Auth): ${emailClean}`);
+      Logger.logActivity('REGISTER', `Nuevo auto-registro pendiente confirmación: ${emailClean}`);
 
-      // 3. Auto-login si la confirmación de email no es necesaria
-      return await this.login(emailClean, password);
+      // Como los correos están activados, no hacemos auto login.
+      // Supabase enviará un correo de verificación.
+      return { ok: true, requireEmail: true, message: 'Revisa tu bandeja de entrada para verificar tu cuenta.' };
 
     } catch (error) {
       console.error('Supabase Auth register error:', error);

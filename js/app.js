@@ -35,6 +35,7 @@ const App = {
 
   /* ─────────────────────────────────────────────────────── */
   async init() {
+    Auth.initListener(); // Escuchar magic links y sesión
     await Store.init();
     window.addEventListener('hashchange', () => this._handleRoute());
     await this._handleRoute();
@@ -43,6 +44,12 @@ const App = {
   /* ─────────────────────────────────────────────────────── */
   async _handleRoute() {
     const hash = window.location.hash || '#/login';
+    
+    // Ignorar hashes que sean tokens de Supabase Auth
+    if (hash.includes('access_token=') || hash.includes('type=recovery')) {
+      return;
+    }
+
     const path = hash.slice(1);
 
     let config = this._routes[path];

@@ -158,14 +158,33 @@ window.NutriPages['register'] = {
 
       const result = await Auth.register(email, password, fname, lname);
 
-      if (result.ok) {
-        const session = Auth.getSession();
-        btnText.textContent = '¡Cuenta Creada!';
-        Toast.success(`¡Bienvenido, ${session.firstName}!`);
-
-        setTimeout(() => {
-          window.location.hash = '#/patient/dashboard';
-        }, 400);
+      if (result.ok && result.requireEmail) {
+        // En lugar de redirigir, mostramos un mensaje para revisar el correo
+        btnText.textContent = '¡Registro Completo!';
+        btnSpinner.classList.add('hidden');
+        
+        // Bloquear los inputs para que no los vuelva a enviar por error
+        form.querySelectorAll('input').forEach(i => i.disabled = true);
+        
+        // Transformar la UI a modo éxito
+        const header = document.querySelector('.login-card__header');
+        header.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px">
+            <div style="width:40px;height:40px;background:linear-gradient(135deg,#10b981,#059669);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(16,185,129,.3)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+            </div>
+          </div>
+          <h2>¡Revisa tu correo!</h2>
+          <p style="color:var(--accent); font-weight:500;">${result.message}</p>
+          <p style="font-size:0.85rem;">Hemos enviado un enlace de confirmación a <strong>${Utils.escapeHtml(email)}</strong>.</p>
+        `;
+        
+        // Ocultar formulario
+        form.innerHTML = `
+          <a href="#/login" class="btn btn-outline btn-full" style="margin-top:20px;text-align:center;">Volver al inicio de sesión</a>
+        `;
+        
+      } else if (result.ok) {
       } else {
         regBtn.disabled = false;
         btnText.textContent = 'Registrarme';
