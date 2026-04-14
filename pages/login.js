@@ -118,11 +118,9 @@ window.NutriPages['login'] = {
 
             </form>
 
-            <!-- Datos de prueba -->
-            <div class="login-hint">
-              <p>Credenciales de prueba</p>
-              <code>Admin: admin@nutricontrol.com / Admin123</code>
-              <code>Paciente: maria@ejemplo.com / Paciente123</code>
+            <!-- Registro -->
+            <div class="login-hint" style="margin-top: 20px; text-align: center;">
+              <p style="color: var(--text-secondary);">¿No tienes una cuenta? <a href="#/register" style="color:var(--accent);text-decoration:none;font-weight:600">Regístrate aquí</a></p>
             </div>
           </div>
 

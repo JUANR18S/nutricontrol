@@ -49,6 +49,60 @@ const Auth = {
   },
 
   /**
+   * Registra un nuevo paciente y su usuario, y luego inicia sesión.
+   */
+  async register(email, password, firstName, lastName) {
+    if (!email || !password || !firstName || !lastName) {
+      return { ok: false, error: 'Por favor completa todos los campos.' };
+    }
+
+    const emailClean = email.toLowerCase().trim();
+    const hash = Utils.hashPassword(password);
+
+    // Verificar email
+    const { data: existingUser } = await sb
+      .from('users')
+      .select('id')
+      .eq('email', emailClean)
+      .maybeSingle();
+
+    if (existingUser) {
+      return { ok: false, error: 'El correo ya está registrado.' };
+    }
+
+    try {
+      // 1. Crear User
+      const userToInsert = {
+        email: emailClean,
+        password: hash,
+        role: 'patient',
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+      };
+      const { data: newUser, error: uErr } = await sb.from('users').insert([userToInsert]).select().single();
+      if (uErr) throw uErr;
+
+      // 2. Crear Patient asociado
+      const patientToInsert = {
+        user_id: newUser.id,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: emailClean,
+      };
+      const { error: pErr } = await sb.from('patients').insert([patientToInsert]);
+      if (pErr) throw pErr;
+
+      Logger.logActivity('REGISTER', `Nuevo auto-registro de paciente: ${emailClean}`);
+
+      // 3. Auto-login
+      return await this.login(emailClean, password);
+
+    } catch (error) {
+      console.error('Auth register error:', error);
+      return { ok: false, error: 'Error al crear la cuenta. Intenta nuevamente.' };
+    }
+  },
+  /**
    * Cierra la sesión.
    */
   logout() {

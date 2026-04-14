@@ -8,6 +8,7 @@ const App = {
   /* Rutas estáticas */
   _routes: {
     '/login':               { page: 'login',              auth: false,    title: 'Iniciar Sesión' },
+    '/register':            { page: 'register',           auth: false,    title: 'Crear Cuenta' },
     '/admin/dashboard':     { page: 'admin-dashboard',    role: 'admin',  title: 'Dashboard' },
     '/admin/patients':      { page: 'admin-patients',     role: 'admin',  title: 'Pacientes' },
     '/admin/patients/new':  { page: 'admin-new-patient',  role: 'admin',  title: 'Nuevo Paciente' },
