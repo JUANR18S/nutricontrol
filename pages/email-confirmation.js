@@ -35,6 +35,7 @@ window.NutriPages['email-confirmation'] = {
               <p>Revisa tu bandeja de entrada y tambien la carpeta de spam.</p>
               ${email ? `<p class="confirmation-email">${Utils.escapeHtml(email)}</p>` : ''}
               <p>Cuando abras el enlace, volveras a NutriControl y podras ${mode === 'admin' ? 'entrar al acceso administrativo' : 'iniciar sesion'}.</p>
+              ${mode === 'admin' ? '<p>El correo de administrador tambien contiene tu ID y la llave credencial temporal generada para este registro.</p>' : ''}
             </div>
 
             <div class="confirmation-actions">

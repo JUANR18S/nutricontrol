@@ -32,13 +32,13 @@ window.NutriPages['admin-access'] = {
                 <div class="brand-feature-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 1 1 2.122 5.122L13.5 14.743m-3 3h.008v.008H10.5v-.008Z"/></svg>
                 </div>
-                <span>El registro exige ID y credencial de administrador.</span>
+                <span>El sistema genera un ID unico de administrador por registro.</span>
               </div>
               <div class="brand-feature">
                 <div class="brand-feature-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 12.75v6.75A2.25 2.25 0 0 0 6.75 21h10.5Z"/></svg>
                 </div>
-                <span>Solo las cuentas con rol administrador ingresan al panel.</span>
+                <span>La llave credencial temporal se envia al correo de confirmacion.</span>
               </div>
             </div>
           </div>
@@ -119,6 +119,27 @@ window.NutriPages['admin-access'] = {
 
                   <div class="form-grid form-grid-2">
                     <div class="form-group">
+                      <label for="admin-reg-document-type">Tipo de documento</label>
+                      <div class="input-wrapper">
+                        <select id="admin-reg-document-type" required>
+                          <option value="">Selecciona una opcion</option>
+                          <option value="cedula_ciudadania">Cedula de ciudadania</option>
+                          <option value="cedula_extranjeria">Cedula de extranjeria</option>
+                          <option value="pasaporte">Pasaporte</option>
+                          <option value="id_extranjero">ID extranjero</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="admin-reg-document-number">Numero de documento</label>
+                      <div class="input-wrapper">
+                        <input type="text" id="admin-reg-document-number" placeholder="Numero de identificacion" required>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-grid form-grid-2">
+                    <div class="form-group">
                       <label for="admin-reg-password">Contrasena</label>
                       <div class="input-wrapper">
                         <input type="password" id="admin-reg-password" placeholder="Minimo 6 caracteres" required>
@@ -142,16 +163,13 @@ window.NutriPages['admin-access'] = {
                     <div class="form-group">
                       <label for="admin-reg-id">ID de administrador</label>
                       <div class="input-wrapper">
-                        <input type="text" id="admin-reg-id" placeholder="ADM-2026-NUTRI" required>
+                        <input type="text" id="admin-reg-id" readonly required>
                       </div>
                     </div>
                     <div class="form-group">
-                      <label for="admin-reg-key">Credencial / llave</label>
-                      <div class="input-wrapper">
-                        <input type="password" id="admin-reg-key" placeholder="Credencial de acceso" required>
-                        <button type="button" class="input-action" id="admin-register-toggle-key" aria-label="Mostrar credencial">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
-                        </button>
+                      <label>Llave credencial</label>
+                      <div class="admin-generated-field">
+                        Se genera automaticamente y se envia al correo junto al enlace de confirmacion.
                       </div>
                     </div>
                   </div>
@@ -182,16 +200,25 @@ window.NutriPages['admin-access'] = {
   init(params = {}) {
     const initialTab = params.query?.tab === 'register' ? 'register' : 'login';
     this._setupTabs(initialTab);
+    this._prepareGeneratedCredentials();
     this._initVisibilityToggles();
     this._initLoginForm();
     this._initRegisterForm();
+  },
+
+  _prepareGeneratedCredentials() {
+    const adminIdInput = document.getElementById('admin-reg-id');
+    const registerForm = document.getElementById('admin-register-form');
+    if (!adminIdInput || !registerForm) return;
+
+    adminIdInput.value = Utils.generateAdminId();
+    registerForm.dataset.generatedAccessKey = Utils.generateAccessKey();
   },
 
   _initVisibilityToggles() {
     this._bindVisibilityToggle('admin-login-toggle-password', 'admin-login-password', 'contrasena');
     this._bindVisibilityToggle('admin-register-toggle-password', 'admin-reg-password', 'contrasena');
     this._bindVisibilityToggle('admin-register-toggle-confirm', 'admin-reg-confirm', 'contrasena');
-    this._bindVisibilityToggle('admin-register-toggle-key', 'admin-reg-key', 'credencial');
   },
 
   _bindVisibilityToggle(toggleId, inputId, label) {
@@ -274,12 +301,14 @@ window.NutriPages['admin-access'] = {
       const firstName = document.getElementById('admin-reg-firstname').value.trim();
       const lastName = document.getElementById('admin-reg-lastname').value.trim();
       const email = document.getElementById('admin-reg-email').value.trim();
+      const documentType = document.getElementById('admin-reg-document-type').value;
+      const documentNumber = document.getElementById('admin-reg-document-number').value.trim();
       const password = document.getElementById('admin-reg-password').value;
       const confirm = document.getElementById('admin-reg-confirm').value;
       const adminId = document.getElementById('admin-reg-id').value.trim();
-      const accessKey = document.getElementById('admin-reg-key').value;
+      const accessKey = form.dataset.generatedAccessKey;
 
-      if (!firstName || !lastName || !email || !password || !confirm || !adminId || !accessKey) {
+      if (!firstName || !lastName || !email || !documentType || !documentNumber || !password || !confirm || !adminId || !accessKey) {
         this._showError(errorEl, errorText, 'Completa todos los campos del registro administrativo.');
         return;
       }
@@ -306,6 +335,8 @@ window.NutriPages['admin-access'] = {
         lastName,
         adminId,
         accessKey,
+        documentType,
+        documentNumber,
       });
 
       if (result.ok && result.requireEmail) {

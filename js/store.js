@@ -9,7 +9,9 @@ const _map = {
     if (!r) return null;
     return {
       id: r.id, email: r.email, password: r.password, role: r.role,
-      firstName: r.first_name, lastName: r.last_name, createdAt: r.created_at,
+      firstName: r.first_name, lastName: r.last_name,
+      adminId: r.admin_id, documentType: r.document_type, documentNumber: r.document_number,
+      registrationKeyHash: r.registration_key_hash, createdAt: r.created_at,
     };
   },
   patient(r) {
@@ -41,6 +43,8 @@ const _map = {
       createdAt: 'created_at', createdBy: 'created_by', userId: 'user_id',
       patientId: 'patient_id', fatPercentage: 'fat_percentage', muscleMass: 'muscle_mass',
       waistCircumference: 'waist_circumference', dietPlan: 'diet_plan', registeredBy: 'registered_by',
+      adminId: 'admin_id', documentType: 'document_type', documentNumber: 'document_number',
+      registrationKeyHash: 'registration_key_hash',
     };
     const result = {};
     for (const [key, val] of Object.entries(obj)) {

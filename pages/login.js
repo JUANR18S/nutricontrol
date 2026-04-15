@@ -124,7 +124,7 @@ window.NutriPages['login'] = {
             </div>
 
             <div class="login-hint login-hint--stacked">
-              <p>Eres administrador?</p>
+              <p>¿Eres administrador?</p>
               <a href="#/admin-access" class="btn btn-secondary btn-full">Acceso administrativo</a>
             </div>
           </div>

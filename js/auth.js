@@ -3,11 +3,6 @@
    ============================================================ */
 
 const Auth = {
-  adminCredentialConfig: {
-    adminId: 'ADM-2026-NUTRI',
-    accessKey: 'NUTRI-ROOT-2026',
-  },
-
   initListener() {
     sb.auth.onAuthStateChange(async (event, authSession) => {
       if (event === 'SIGNED_IN' && authSession?.user) {
@@ -156,19 +151,14 @@ const Auth = {
     }
   },
 
-  async registerAdmin({ email, password, firstName, lastName, adminId, accessKey }) {
-    if (!email || !password || !firstName || !lastName || !adminId || !accessKey) {
-      return { ok: false, error: 'Completa todos los campos y la credencial de administrador.' };
-    }
-
-    if (
-      adminId.trim() !== this.adminCredentialConfig.adminId ||
-      accessKey.trim() !== this.adminCredentialConfig.accessKey
-    ) {
-      return { ok: false, error: 'La credencial de administrador no es valida.' };
+  async registerAdmin({ email, password, firstName, lastName, adminId, accessKey, documentType, documentNumber }) {
+    if (!email || !password || !firstName || !lastName || !adminId || !accessKey || !documentType || !documentNumber) {
+      return { ok: false, error: 'Completa todos los campos obligatorios del registro administrativo.' };
     }
 
     const emailClean = email.toLowerCase().trim();
+    const adminIdClean = adminId.trim();
+    const documentNumberClean = documentNumber.trim();
 
     try {
       const { data: authData, error: authError } = await sb.auth.signUp({
@@ -180,6 +170,10 @@ const Auth = {
             first_name: firstName.trim(),
             last_name: lastName.trim(),
             role: 'admin',
+            admin_id: adminIdClean,
+            registration_key: accessKey,
+            document_type: documentType,
+            document_number: documentNumberClean,
           },
         },
       });
@@ -194,6 +188,10 @@ const Auth = {
           role: 'admin',
           first_name: firstName.trim(),
           last_name: lastName.trim(),
+          admin_id: adminIdClean,
+          document_type: documentType,
+          document_number: documentNumberClean,
+          registration_key_hash: Utils.hashPassword(accessKey),
           created_at: new Date().toISOString(),
         }]);
 
@@ -201,12 +199,18 @@ const Auth = {
       }
 
       Logger.logActivity('REGISTER_ADMIN', `Nuevo administrador registrado: ${emailClean}`);
-      return { ok: true, requireEmail: true, message: 'Confirma tu correo para activar el acceso administrativo.' };
+      return { ok: true, requireEmail: true, message: 'Confirma tu correo para activar el acceso administrativo. Te enviamos tu ID y llave temporal.' };
     } catch (error) {
       console.error('Supabase Auth register admin error:', error);
 
       if (error.message.includes('User already registered') || error.message.includes('already exists')) {
         return { ok: false, error: 'El correo ya esta registrado.' };
+      }
+      if (error.message.includes('users_admin_id_key')) {
+        return { ok: false, error: 'Se genero un ID de administrador repetido. Intenta de nuevo.' };
+      }
+      if (error.message.includes('users_document_type_document_number_key')) {
+        return { ok: false, error: 'Ya existe un administrador con ese tipo y numero de documento.' };
       }
 
       return { ok: false, error: `Error al registrar administrador: ${error.message}` };

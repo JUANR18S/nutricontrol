@@ -99,4 +99,19 @@ const Utils = {
   pad(n, len = 2) {
     return String(n).padStart(len, '0');
   },
+
+  generateAdminId() {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const randomPart = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+      .map(n => alphabet[n % alphabet.length])
+      .join('');
+    return `ADM-${randomPart}`;
+  },
+
+  generateAccessKey(length = 18) {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    return Array.from(crypto.getRandomValues(new Uint8Array(length)))
+      .map(n => alphabet[n % alphabet.length])
+      .join('');
+  },
 };

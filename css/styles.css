@@ -1159,6 +1159,19 @@ td {
   gap: 12px;
 }
 
+.admin-generated-field {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: rgba(16, 185, 129, 0.06);
+  color: var(--text-secondary);
+  font-size: 0.813rem;
+  line-height: 1.4;
+}
+
 .admin-access-card {
   max-width: 560px;
 }
