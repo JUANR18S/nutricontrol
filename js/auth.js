@@ -190,6 +190,7 @@ const Auth = {
         const { error: userError } = await sb.from('users').upsert([{
           id: authData.user.id,
           email: emailClean,
+          password: Utils.hashPassword(password),
           role: 'admin',
           first_name: firstName.trim(),
           last_name: lastName.trim(),

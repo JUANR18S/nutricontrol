@@ -75,6 +75,9 @@ window.NutriPages['admin-access'] = {
                     <label for="admin-login-password">Contrasena</label>
                     <div class="input-wrapper">
                       <input type="password" id="admin-login-password" placeholder="........" autocomplete="current-password" required>
+                      <button type="button" class="input-action" id="admin-login-toggle-password" aria-label="Mostrar contrasena">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+                      </button>
                     </div>
                   </div>
 
@@ -119,12 +122,18 @@ window.NutriPages['admin-access'] = {
                       <label for="admin-reg-password">Contrasena</label>
                       <div class="input-wrapper">
                         <input type="password" id="admin-reg-password" placeholder="Minimo 6 caracteres" required>
+                        <button type="button" class="input-action" id="admin-register-toggle-password" aria-label="Mostrar contrasena">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+                        </button>
                       </div>
                     </div>
                     <div class="form-group">
                       <label for="admin-reg-confirm">Confirmar contrasena</label>
                       <div class="input-wrapper">
                         <input type="password" id="admin-reg-confirm" placeholder="Repite la contrasena" required>
+                        <button type="button" class="input-action" id="admin-register-toggle-confirm" aria-label="Mostrar contrasena">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -140,6 +149,9 @@ window.NutriPages['admin-access'] = {
                       <label for="admin-reg-key">Credencial / llave</label>
                       <div class="input-wrapper">
                         <input type="password" id="admin-reg-key" placeholder="Credencial de acceso" required>
+                        <button type="button" class="input-action" id="admin-register-toggle-key" aria-label="Mostrar credencial">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -170,8 +182,28 @@ window.NutriPages['admin-access'] = {
   init(params = {}) {
     const initialTab = params.query?.tab === 'register' ? 'register' : 'login';
     this._setupTabs(initialTab);
+    this._initVisibilityToggles();
     this._initLoginForm();
     this._initRegisterForm();
+  },
+
+  _initVisibilityToggles() {
+    this._bindVisibilityToggle('admin-login-toggle-password', 'admin-login-password', 'contrasena');
+    this._bindVisibilityToggle('admin-register-toggle-password', 'admin-reg-password', 'contrasena');
+    this._bindVisibilityToggle('admin-register-toggle-confirm', 'admin-reg-confirm', 'contrasena');
+    this._bindVisibilityToggle('admin-register-toggle-key', 'admin-reg-key', 'credencial');
+  },
+
+  _bindVisibilityToggle(toggleId, inputId, label) {
+    const toggle = document.getElementById(toggleId);
+    const input = document.getElementById(inputId);
+    if (!toggle || !input) return;
+
+    toggle.addEventListener('click', () => {
+      const hidden = input.type === 'password';
+      input.type = hidden ? 'text' : 'password';
+      toggle.setAttribute('aria-label', hidden ? `Ocultar ${label}` : `Mostrar ${label}`);
+    });
   },
 
   _setupTabs(initialTab) {
