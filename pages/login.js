@@ -119,7 +119,7 @@ window.NutriPages['login'] = {
             </form>
 
             <div class="login-hint login-hint--stacked">
-              <p>No estas registrado?</p>
+              <p>¿No estas registrado?</p>
               <a href="#/register" class="btn btn-outline btn-full">Registrate aqui</a>
             </div>
 
